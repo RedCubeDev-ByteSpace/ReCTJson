@@ -1,0 +1,222 @@
+inc class JsonObject
+{
+	set Keys  <- make string array(0);
+	set Vals  <- make JsonEntry array(0);
+	//set types <- make DataType array(0);
+
+	set function add(key string, value JsonEntry)
+	{
+		Keys->Push(key);
+		Vals->Push(value);
+	}
+
+	set function GetKeys() stringArr
+	{
+		return Keys;
+	}
+
+	set function GetLength() int
+	{
+		return Keys->GetLength();
+	}
+
+	function GetValue(key string, typ DataType, name string) any
+	{
+		from (i <- 0) to Keys->GetLength() -1
+		{
+			if (Keys[i] = key)
+			{
+				if (int(Vals[i]->Type) = int(DataType->Null))
+					return null;
+
+				if (int(Vals[i]->Type) != int(typ))
+				{
+					Print("[JSON] COULDNT GET "+name+" '"+ key +"'! ENTRY IS OF TYPE '"+ string(Vals[i]->Type) +"'!");
+					return null;
+				}
+
+				return Vals[i]->Value;
+			}
+		}
+
+		Print("[JSON] COULDNT FIND ENTRY '"+ key +"'!");
+		return null;
+	}
+
+	set function GetString(key string) string
+	{
+		var lookup <- GetValue(key, DataType->String, "STRING");
+		return lookup = nil ? "" : string(lookup);
+	}
+
+	set function GetInt(key string) int
+	{
+		var lookup <- GetValue(key, DataType->Number, "INT");
+		return lookup = nil ? 0 : int(string(lookup));
+	}
+
+	set function GetFloat(key string) float
+	{
+		var lookup <- GetValue(key, DataType->Number, "FLOAT");
+		return lookup = nil ? 0.0 : float(string(lookup));
+	}
+
+	set function GetBool(key string) bool
+	{
+		var lookup <- GetValue(key, DataType->Bool, "BOOL");
+		return lookup = nil ? false : bool(string(lookup));
+	}
+
+	set function GetObject(key string) JsonObject
+	{
+		var lookup <- GetValue(key, DataType->JsonObject, "OBJECT");
+		return lookup = nil ? JsonObject(nil) : JsonObject(lookup);
+	}
+
+	set function GetList(key string) JsonList
+	{
+		var lookup <- GetValue(key, DataType->JsonList, "LIST");
+		return lookup = nil ? JsonList(nil) : JsonList(lookup);
+	}
+}
+
+inc class JsonList
+{
+	set Vals <- make JsonEntry array(0);
+
+	set function add(value any)
+	{
+		Vals->Push(value);
+	}
+
+	set function GetLength() int
+	{
+		return Vals->GetLength();
+	}
+
+	function GetValue(index int, typ DataType, name string) any
+	{
+		if (index >= Vals->GetLength())
+		{
+			Print("[JSON] INDEX OUT OF RANGE! INDEX: "+ string(index) +"; LEN: "+ string(Vals->GetLength()) +"!");
+			return null;
+		}
+	
+		if (int(Vals[index]->Type) = int(DataType->Null))
+			return null;
+
+		if (int(Vals[index]->Type) != int(typ))
+		{
+			Print("[JSON] COULDNT GET "+name+" AT "+ string(index) +"! ENTRY IS OF TYPE '"+ string(Vals[index]->Type) +"'!");
+			return null;
+		}
+
+		return Vals[index]->Value;
+	}
+
+	set function GetString(index int) string
+	{
+		var lookup <- GetValue(index, DataType->String, "STRING");
+		return lookup = nil ? "" : string(lookup);
+	}
+
+	set function GetInt(index int) int
+	{
+		var lookup <- GetValue(index, DataType->Number, "INT");
+		return lookup = nil ? 0 : int(string(lookup));
+	}
+
+	set function GetFloat(index int) float
+	{
+		var lookup <- GetValue(index, DataType->Number, "FLOAT");
+		return lookup = nil ? 0.0 : float(string(lookup));
+	}
+
+	set function GetBool(index int) bool
+	{
+		var lookup <- GetValue(index, DataType->Bool, "BOOL");
+		return lookup = nil ? false : bool(string(lookup));
+	}
+
+	set function GetObject(index int) JsonObject
+	{
+		var lookup <- GetValue(index, DataType->JsonObject, "OBJECT");
+		return lookup = nil ? JsonObject(nil) : JsonObject(lookup);
+	}
+
+	set function GetList(index int) JsonList
+	{
+		var lookup <- GetValue(index, DataType->JsonList, "LIST");
+		return lookup = nil ? JsonList(nil) : JsonList(lookup);
+	}
+}
+
+inc class JsonEntry
+{
+	set DataType Type;
+	set any Value;
+
+	function Constructor(typ DataType, val any)
+	{
+		Type  <- typ;
+		Value <- val;
+	}
+}
+
+enum DataType
+{
+	String,
+	Number,
+	Bool,
+	Null,
+
+	JsonObject,
+	JsonList
+}
+
+
+function PrintObj(inset string, obj JsonObject)
+{
+	for(var i <- 0; i < obj->Keys->GetLength(); i++)
+	{
+		if (int(obj->Vals->At(i)->Type) = int(DataType->JsonObject))
+		{
+			SetConsoleForeground(6);
+			Print(inset + obj->Keys->At(i) + ":");
+			PrintObj(inset + "  ", JsonObject(obj->Vals->At(i)->Value));
+		}
+		else if (int(obj->Vals->At(i)->Type) = int(DataType->JsonList))
+		{
+			SetConsoleForeground(4);
+			Print(inset + obj->Keys->At(i) + ":");
+			PrintLst(inset + "  ", JsonList(obj->Vals->At(i)->Value));
+		}
+		else
+		{
+			SetConsoleForeground(3);
+			Print(inset + obj->Keys->At(i) + ":");
+			SetConsoleForeground(5);
+			Print(inset + "  " + string(obj->Vals->At(i)->Value));
+		}
+	}
+}
+
+function PrintLst(inset string, lst JsonList)
+{
+	for(var i <- 0; i < lst->Vals->GetLength(); i++)
+	{
+		if (int(lst->Vals->At(i)->Type) = int(DataType->JsonObject))
+		{
+			PrintObj(inset + "  ", JsonObject(lst->Vals->At(i)->Value));
+		}
+		else if (int(lst->Vals->At(i)->Type) = int(DataType->JsonList))
+		{
+			PrintLst(inset + "  ", JsonList(lst->Vals->At(i)->Value));
+		}
+		else
+		{
+			SetConsoleForeground(5);
+			Print(inset + "  " + string(lst->Vals->At(i)->Value));
+		}
+	}
+}

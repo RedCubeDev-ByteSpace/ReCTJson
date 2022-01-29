@@ -1,0 +1,131 @@
+class Parser
+{
+	set root <- make JsonObject();
+	set TokenArr tokens;
+
+	set Pointer <- 0;
+
+	function Constructor(toks TokenArr)
+	{
+		tokens <- toks;
+	}
+
+	set function Parse() JsonObject
+	{
+		if (Current()->Type != TokenType->OpenBrace)
+		{
+			Print("[JSON] MISSING ROOT OBJECT!");
+			die(-1);
+			return root;
+		}
+
+		root <- ParseObject();
+
+		return root;
+	}
+
+	function ParseValue() JsonEntry
+	{
+		if (int(Current()->Type) = int(TokenType->OpenBrace))
+			return make JsonEntry(DataType->JsonObject, ParseObject());
+
+		if (int(Current()->Type) = int(TokenType->OpenBracket))
+			return make JsonEntry(DataType->JsonList, ParseList());
+
+		if (int(Current()->Type) = int(TokenType->String))
+			return make JsonEntry(DataType->String, Consume(TokenType->String)->Value);
+		
+		if (int(Current()->Type) = int(TokenType->Number))
+			return make JsonEntry(DataType->Number, Consume(TokenType->Number)->Value);
+		
+		if (int(Current()->Type) = int(TokenType->Bool))
+			return make JsonEntry(DataType->Bool, Consume(TokenType->Bool)->Value);
+
+		if (int(Current()->Type) = int(TokenType->Null))
+		{
+			Consume(TokenType->Null);
+			return make JsonEntry(DataType->Null, null);
+		}
+
+		return make JsonEntry(DataType->Null, null);
+	}
+
+	function ParseObject() JsonObject
+	{
+		var me <- make JsonObject();
+
+		Consume(TokenType->OpenBrace);
+
+		if (int(Current()->Type) = int(TokenType->String))
+		while (true)
+		{
+			var fieldName <- Consume(TokenType->String);
+			Consume(TokenType->Colon);
+			var val <- ParseValue();
+
+			me->add(fieldName->Value, val);
+
+			if (int(Current()->Type) = int(TokenType->Comma))
+				Consume(TokenType->Comma);
+			else
+				break;
+		}
+
+		Consume(TokenType->CloseBrace);
+		return me;
+	}
+
+	function ParseList() JsonList
+	{
+		var me <- make JsonList();
+
+		Consume(TokenType->OpenBracket);
+
+		while (true)
+		{
+			var val <- ParseValue();
+			me->add(val);
+
+			if (int(Current()->Type) = int(TokenType->Comma))
+				Consume(TokenType->Comma);
+			else
+				break;
+		}
+
+		Consume(TokenType->CloseBracket);
+		return me;
+	}
+
+	function Current() Token
+	{
+		return Peek(0);
+	}
+
+	function Peek(offset int) Token
+	{
+		if (Pointer + offset < 0)
+			return make Token(TokenType->Empty, "EOF", Pointer + offset);
+
+		if (Pointer + offset >= tokens->GetLength())
+			return make Token(TokenType->Empty, "EOF", Pointer + offset);
+
+		return tokens[Pointer + offset];
+	}
+
+	function Consume(expected TokenType) Token
+	{
+		if (int(Current()->Type) != int(expected))
+		{
+			Print("[JSON] INVALID JSON, EXPECTED: " + string(expected) + ", GOT: " + string(Current()->Type));
+			die(-1);
+		}
+
+		Pointer++;
+		return Peek(-1);
+	}
+
+	function Step(by int)
+	{
+		Pointer <-+ by;
+	}
+}

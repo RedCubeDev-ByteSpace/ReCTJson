@@ -1,0 +1,32 @@
+class Token
+{
+	set TokenType Type;
+	set string Value;
+	set int Position;
+
+	function Constructor(typ TokenType, val string, pos int)
+	{
+		Type     <- typ;
+		Value    <- val;
+		Position <- pos;
+	}
+}
+
+enum TokenType
+{
+	Empty,
+
+	OpenBrace,
+	CloseBrace,
+
+	OpenBracket,
+	CloseBracket,
+
+	Colon,
+	Comma,
+
+	String,
+	Number,
+	Bool,
+	Null
+}

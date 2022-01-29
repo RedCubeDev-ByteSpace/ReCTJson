@@ -1,0 +1,183 @@
+class Lexer
+{
+	set Pointer <- 0;
+	set Text <- "";
+
+	function Constructor(text string)
+	{
+		Text <- text;
+	}
+
+	set function Lex() TokenArr
+	{
+		var tokens <- make Token array(0);
+
+		while (Current() != "EOF")
+		{
+			if (Current() = " ")  { Step(1); continue; }
+			if (Current() = "\t") { Step(1); continue; }
+			if (Current() = "\r") { Step(1); continue; }
+			if (Current() = "\n") { Step(1); continue; }
+
+			if (Current() = "{") { tokens->Push(make Token(TokenType->OpenBrace, Current(), Pointer)); Step(1); continue; }
+			if (Current() = "}") { tokens->Push(make Token(TokenType->CloseBrace, Current(), Pointer)); Step(1); continue; }
+			if (Current() = "[") { tokens->Push(make Token(TokenType->OpenBracket, Current(), Pointer)); Step(1); continue; }
+			if (Current() = "]") { tokens->Push(make Token(TokenType->CloseBracket, Current(), Pointer)); Step(1); continue; }
+
+			if (Current() = ":") { tokens->Push(make Token(TokenType->Colon, Current(), Pointer)); Step(1); continue; }
+			if (Current() = ",") { tokens->Push(make Token(TokenType->Comma, Current(), Pointer)); Step(1); continue; }
+
+			if (Current() = """") 
+			{
+				var pos <- Pointer;
+
+				Step(1);
+
+				var strValue <- LexString();
+				tokens->Push(make Token(TokenType->String, strValue, pos)); continue; 
+			}
+
+			if (IsDigit(Current()) || Current() = "-")
+			{
+				var pos <- Pointer;
+
+				var numValue <- LexNumber();
+				tokens->Push(make Token(TokenType->Number, numValue, pos)); continue; 
+			}
+			
+			if (IsLetter(Current()))
+			{
+				var pos <- Pointer;
+				var val <- LexWord();
+				tokens->Push(IdentifyWord(pos, val));
+				continue;
+			}
+
+			Print("[JSON] UNRECOGNISED CHARACTER '" + Current() + "'");
+			die(-1);
+		}
+
+		return tokens;
+	}
+
+	function IdentifyWord(pos int, val string) Token
+	{
+		if (val = "true" || val = "True")
+			return make Token(TokenType->Bool, "true", pos);
+		else if (val = "false" || val = "False")
+			return make Token(TokenType->Bool, "false", pos);
+		else if (val = "null" || val = "Null")
+			return make Token(TokenType->Null, "null", pos);
+		else
+		{
+			Print("[JSON] UNRECOGNISED WORD '" + val + "'");
+			die(-1);
+		}
+		return Token(null);
+	}
+
+	function LexString() string
+	{
+		var strValue <- "";
+
+		while (Current() != """" && Current() != "EOF")
+		{
+			if (Current() = "\\")
+			{
+				if (Peek(1) = "b")
+					strValue <-+ Char(8);
+
+				if (Peek(1) = "n")
+					strValue <-+ "\n";
+
+				if (Peek(1) = "r")
+					strValue <-+ "\r";
+
+				if (Peek(1) = "t")
+					strValue <-+ "\t";
+
+				if (Peek(1) = """")
+					strValue <-+ """";
+
+				if (Peek(1) = "\\")
+					strValue <-+ "\\";
+
+				Step(2);
+				continue;
+			}
+
+			strValue <-+ Current();
+			Step(1);
+		}
+
+		Step(1);
+		return strValue;
+	}
+
+	function LexNumber() string
+	{
+		var numValue <- "";
+
+		while (IsDigit(Current()) || Current() = "." || Current() = "-")
+		{
+			numValue <-+ Current();
+			Step(1);
+		}
+
+		return numValue;
+	}
+
+	function LexWord() string
+	{
+		var wrdValue <- "";
+
+		while (IsLetter(Current()))
+		{
+			wrdValue <-+ Current();
+			Step(1);
+		}
+
+		return wrdValue;
+	}
+
+	function Current() string
+	{
+		return Peek(0);
+	}
+
+	function Peek(offset int) string
+	{
+		if (Pointer + offset < 0)
+			return "";
+
+		if (Pointer + offset >= Text->GetLength())
+			return "EOF";
+
+		return Text->At(Pointer + offset);
+	}
+
+	function Step(by int)
+	{
+		Pointer <-+ by;
+	}
+
+	function IsDigit(str string) bool
+	{
+		var digits <- "1234567890";
+		
+		from (i <- 0) to digits->GetLength() -1
+			if (digits->At(i) = str) return true;
+
+		return false;
+	}
+
+	function IsLetter(str string) bool
+	{
+		var letters <- "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
+		
+		from (i <- 0) to letters->GetLength() -1
+			if (letters->At(i) = str) return true;
+
+		return false;
+	}
+}

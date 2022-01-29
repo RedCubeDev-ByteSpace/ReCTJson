@@ -1,0 +1,20 @@
+// json - ReCT v2.3.1.9 
+package sys; use sys;
+
+type Json;
+namespace Json;
+
+#attach("token.rct");
+#attach("jsonobjects.rct");
+#attach("lexer.rct");
+#attach("parser.rct");
+
+set function ParseJson(json string) JsonObject
+{
+	var lexer <- make Lexer(json);
+	var tokens <- lexer->Lex();
+	var parser <- make Parser(tokens);
+	return parser->Parse();
+}
+
+return;
