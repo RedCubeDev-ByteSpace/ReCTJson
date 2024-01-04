@@ -1,6 +1,6 @@
 class Parser
 {
-	set root <- make JsonObject();
+	set root <- make JsonEntry();
 	set TokenArr tokens;
 
 	set Pointer <- 0;
@@ -10,17 +10,10 @@ class Parser
 		tokens <- toks;
 	}
 
-	set function Parse() JsonObject
+	set function Parse() JsonEntry
 	{
-		if (Current()->Type != TokenType->OpenBrace)
-		{
-			Print("[JSON] MISSING ROOT OBJECT!");
-			die(-1);
-			return root;
-		}
-
-		root <- ParseObject();
-
+		// JSON allows ANY datatype to be at root, as of RFC 7158.
+		root <- ParseValue();
 		return root;
 	}
 
