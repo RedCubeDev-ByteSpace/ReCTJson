@@ -10,8 +10,9 @@ package dll Json;
 var myJsonText <- "{}";
 var parsedJson <- Json::ParseJson(myJsonText);
 ```
-The `ParseJson()` function will return an object of type `JsonObject`  
-To get data from it you can use these functions:
+The `ParseJson()` function will return an object of type `JsonEntry`.
+
+The object contains two properties, `Type` and `Value`. In most cases `Type` will be `JsonObject`, in which case you can cast `Value` to that type and use the following functions to get data:
 ```
 jsonObj->GetBool(key string)   bool
 jsonObj->GetInt(key string)    int
@@ -28,8 +29,7 @@ And also the number of entries by using:
 ```js
 jsonObject->GetLength()
 ```
-
-To get data out of JsonLists you can use these functions:
+If it's a JsonList you'd cast it to said type and use the following functions:
 ```js
 jsonLst->GetBool(index int)   bool
 jsonLst->GetInt(index int)    int
@@ -38,4 +38,6 @@ jsonLst->GetString(index int) string
 jsonLst->GetObject(index int) JsonObject
 jsonLst->GetList(index int)   JsonList
 ```
-And to get a JsonLists length you can use the `jsonLst->GetLength()` function
+And to get a JsonLists length you can use the `jsonLst->GetLength()` function.
+
+If the `Type` field matches a primitive then you may expect `Value` to be said primitive
