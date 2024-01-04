@@ -9,7 +9,7 @@ namespace Json;
 #attach("lexer.rct");
 #attach("parser.rct");
 
-set function ParseJson(json string) JsonObject
+set function ParseJson(json string) JsonEntry
 {
 	var lexer <- make Lexer(json);
 	var tokens <- lexer->Lex();
