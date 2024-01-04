@@ -40,4 +40,5 @@ jsonLst->GetList(index int)   JsonList
 ```
 And to get a JsonLists length you can use the `jsonLst->GetLength()` function.
 
-If the `Type` field matches a primitive then you may expect `Value` to be said primitive
+If the `Type` field matches a primitive then you may expect `Value` to be a string which you can cast to said primitive.
+Due to differences in how ReCT and JSON handles types we cannot reliably have `Value` be of the specified object type, but casting from a string is rather easy.
